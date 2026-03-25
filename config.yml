@@ -1,0 +1,8 @@
+model:
+  name: "facebook/nllb-200-distilled-600M"
+  src_lang: "eng_Latn"
+  use_fast_tokenizer: true
+
+message:
+  loading: "Loading model and tokenizer..."
+  waiting: "Please wait while the model is being loaded. This may take a few moments."
