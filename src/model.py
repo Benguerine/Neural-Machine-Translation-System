@@ -3,6 +3,9 @@ import yaml
 from pathlib import Path
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
+import logging
+logging.disable(logging.WARNING)
+
 
 
 _config_path = Path(__file__).resolve().parent.parent / "config.yml" ## 1
@@ -40,3 +43,5 @@ model = AutoModelForSeq2SeqLM.from_pretrained(
 model.eval()
 
 print("Model loaded successfully")
+print(f"Parameters : {sum(p.numel() for p in model.parameters()) / 1e6:.1f}M")
+print(f"dtype      : {model.dtype}")
