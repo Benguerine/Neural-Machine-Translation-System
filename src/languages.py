@@ -90,7 +90,7 @@ def get_flores_code(language: str, fallback: str = "eng_Latn") -> str:
     return LANGUAGE_CODES.get(language, fallback)
 
 
-def get_speech_code(language: str, fallback: str = "en_US") -> str:
+def get_speech_code(language: str, fallback: str = "en-US") -> str:
     """Return the GOOGLE SR ISO code for a language name."""
     return SPEECH_LANG_CODES.get(language, fallback)
 

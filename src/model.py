@@ -4,8 +4,7 @@ from pathlib import Path
 from transformers import AutoTokenizer, AutoModelForSeq2SeqLM
 
 import logging
-logging.disable(logging.WARNING)
-
+logging.disable(logging.WARNING) ## Check this when you free
 
 
 _config_path = Path(__file__).resolve().parent.parent / "config.yml" ## 1
