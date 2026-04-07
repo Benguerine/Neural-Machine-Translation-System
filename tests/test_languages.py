@@ -2,7 +2,7 @@
 
 import re
 import pytest
-from src.languages import (
+from ai_translator.languages import (
     LANGUAGE_CODES,
     SPEECH_LANG_CODES,
     SUPPORTED_LANGUAGES,
