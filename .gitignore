@@ -1,4 +1,4 @@
 .pytest_cache/
-src/__pycache__/
+src/ai_translator/__pycache__/
 tests/__pycache__/
 tests/.pytest_cache/
