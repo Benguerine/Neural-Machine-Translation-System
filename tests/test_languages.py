@@ -32,4 +32,40 @@ class TestLanguageCodes:
     def test_no_duplicate_flores_codes(self):
         codes = list(LANGUAGE_CODES.values())
         assert len(codes) == len(set(codes)), "Duplicate FLORES-200 codes found"
+
+    def test_english_code_is_correct(self):
+        assert LANGUAGE_CODES["English"] == "eng_Latn"
+
+    def test_arabic_code_is_correct(self):
+        assert LANGUAGE_CODES["Arabic"] == "arb_Arab"
+
+
+class TestGetFloresCode:
+
+    def test_known_language(self):
+        assert get_flores_code("English") == "eng_Latn"
+        assert get_flores_code("French")  == "fra_Latn"
+        assert get_flores_code("Arabic")  == "arb_Arab"
+
+    def test_unknown_language_returns_default_fallback(self):
+        assert get_flores_code("Klingon") == "eng_Latn"
+
+    def test_unknown_language_returns_custom_fallback(self):
+        assert get_flores_code("Klingon", "fra_Latn") == "fra_Latn"
+
+
+class TestGetSpeechCode:
+
+    def test_known_language(self):
+        assert get_speech_code("English") == "en-US"
+        assert get_speech_code("French")  == "fr-FR"
+        assert get_speech_code("Arabic")  == "ar-SA"
+
+    def test_language_without_speech_support_returns_fallback(self):
+        # Swahili has FLORES code but no Google SR support
+        assert get_speech_code("Swahili") == "en-US"
+
+    def test_custom_fallback(self):
+        assert get_speech_code("Swahili", "fr-FR") == "fr-FR"
+
             
