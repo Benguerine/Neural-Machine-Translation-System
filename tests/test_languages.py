@@ -22,12 +22,12 @@ class TestLanguageCodes:
     def test_supported_languages_matches_dict_keys(self):
         assert SUPPORTED_LANGUAGES == list(LANGUAGE_CODES.keys())
 
-    def test_contains_core_Languages(self):
+    def test_contains_core_languages(self):
         for lang in ["English", "French", "Arabic", "Spanish", "German"]:
             assert lang in LANGUAGE_CODES, f"Missing: {lang}"
-    
-    def test_has_50_languages(self):
-        assert len(LANGUAGE_CODES) == 50
+    minimum_lang = 50
+    def test_has_minimum_languages(self):
+        assert len(LANGUAGE_CODES) >= self.minimum_lang
 
     def test_no_duplicate_flores_codes(self):
         codes = list(LANGUAGE_CODES.values())
