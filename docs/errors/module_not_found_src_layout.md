@@ -1,7 +1,7 @@
 # ModuleNotFoundError — src/ layout not configured
 
-**Date:** 2026-04-11
-**Project:** Neural Machine Translation  
+**Date:** 2026-04-11  
+**Project:** Neural Machine Translation — AI Translator  
 **Environment:** Windows 11, Python 3.12.9  
 
 ---
