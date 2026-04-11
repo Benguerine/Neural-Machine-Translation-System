@@ -6,11 +6,29 @@ Integration tests for the translation functionality
 
 import pytest
 from ai_translator.translate import translate_text, batch_translate
+from unittest.mock import patch, MagicMock
 
 
 class TestTranslateText:
 
-    def test_english_to_french(self):
+    
+
+    def test_english_to_french_returns_string(self):
+        with patch("ai_translator.translate.model") as mock_model:
+            mock_model.generate.return_value = MagicMock()
+            with patch("ai_translator.translate.tokenizer") as mock_tok:
+                mock_tok.decode.return_value = "Bonjour Mohammed, comment allez-vous?"
+            
+        result = translate_text("Hello Mohammed, how are you?", "English", "French")
+            
+        assert isinstance(result, str)
+        assert len(result) > 0
+        assert not result.startswith("Translation error")
+
+    import pytest
+
+    @pytest.mark.integration
+    def test_english_to_french_real_model(self):
         result = translate_text("Hello Mohammed, how are you?", "English", "French")
         assert isinstance(result, str)
         assert len(result) > 0
