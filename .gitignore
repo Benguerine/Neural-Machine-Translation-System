@@ -3,3 +3,5 @@ src/ai_translator/__pycache__/
 tests/__pycache__/
 tests/.pytest_cache/
 src/ai_translator.egg-info
+.env
+venv/
