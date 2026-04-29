@@ -1,17 +1,18 @@
 """
-
+Neural Machine Translation — AI Translator
+Gradio app entry point.
 """
 
 import warnings
-warnings.filterwarnings("ignore")
 
 import gradio as gr
-
 
 from src.ai_translator.languages import SUPPORTED_LANGUAGES
 from src.ai_translator.translate import translate_text, batch_translate
 from src.ai_translator.speech    import speech_to_text
 from src.ai_translator.evaluate  import calculate_bleu
+
+warnings.filterwarnings("ignore")
 
 
 # Gradio wrapper functions
@@ -44,7 +45,7 @@ def gradio_bleu(reference: str, hypothesis: str) -> str:
     return report
 
 
-# Gradio UI — identical to original app.py
+# Gradio UI
 
 with gr.Blocks(
     title="🌍 Neural Machine Translation",
@@ -120,7 +121,7 @@ with gr.Blocks(
                 type="filepath",
                 label="🎙️ Record or Upload Audio",
             )
-            transcribed_output       = gr.Textbox(label="📝 Transcribed Text", show_copy_button=True)
+            transcribed_output        = gr.Textbox(label="📝 Transcribed Text", show_copy_button=True)
             speech_translation_output = gr.Textbox(label="✨ Translation",      show_copy_button=True)
 
             speech_translate_btn = gr.Button("🚀 Transcribe & Translate", variant="primary", size="lg")
@@ -201,8 +202,8 @@ with gr.Blocks(
 
             gr.Examples(
                 examples=[
-                    ["Le chat est sur le tapis",    "Le chat est sur le tapis"],
-                    ["Bonjour, comment allez-vous?","Bonjour, comment vas-tu?"],
+                    ["Le chat est sur le tapis",     "Le chat est sur le tapis"],
+                    ["Bonjour, comment allez-vous?", "Bonjour, comment vas-tu?"],
                 ],
                 inputs=[reference_text, hypothesis_text],
             )
@@ -216,7 +217,8 @@ with gr.Blocks(
         """
     )
 
-# ── Launch ────────────────────────────────────────────────────────────────────
+
+# Launch the app
 
 if __name__ == "__main__":
     demo.launch(server_name="0.0.0.0", server_port=7860, share=False)
