@@ -1,0 +1,17 @@
+# ruff.toml
+# Ruff configuration for Neural Machine Translation project
+
+[lint]
+# E402 — imports not at top of file:
+#   app.py puts warnings.filterwarnings() between imports intentionally.
+#   Fixed in app.py; keeping here as safety net for future files.
+#
+# F401 — unused imports:
+#   notebook/ cells import libraries for interactive exploration.
+#   These are intentional and should not be flagged.
+ignore = ["F401"]
+
+[lint.per-file-ignores]
+# Notebooks are exploratory — unused imports are expected
+"notebook/*.ipynb" = ["F401", "E402", "E501"]
+"*.ipynb"          = ["F401", "E402", "E501"]
