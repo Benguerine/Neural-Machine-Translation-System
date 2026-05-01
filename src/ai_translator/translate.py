@@ -70,14 +70,13 @@ def batch_translate(
     """Translate a list of texts, returning translations joined by separator."""
     if not texts:
         return ""
-
-    # FIX — same lazy-load call as translate_text above
-    model, tokenizer = get_model()
+    
 
     try:
         sentences = [s.strip() for s in texts if s.strip()]
         if not sentences:
             return ""
+        model, tokenizer = get_model()
 
         src_code = get_flores_code(source_lang, "eng_Latn")
         tgt_code = get_flores_code(target_lang, "fra_Latn")
