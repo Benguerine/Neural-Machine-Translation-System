@@ -75,7 +75,7 @@ with gr.Blocks(
                     )
                     input_text = gr.Textbox(
                         lines=10, placeholder="Enter text to translate...",
-                        label="📝 Input Text", show_copy_button=True,
+                        label="📝 Input Text",
                     )
                 with gr.Column(scale=1):
                     tgt_lang_text = gr.Dropdown(
@@ -83,7 +83,7 @@ with gr.Blocks(
                         label="🌐 Target Language", interactive=True,
                     )
                     output_text = gr.Textbox(
-                        lines=10, label="✨ Translation", show_copy_button=True,
+                        lines=10, label="✨ Translation",
                     )
 
             translate_btn = gr.Button("🚀 Translate", variant="primary", size="lg")
@@ -121,8 +121,8 @@ with gr.Blocks(
                 type="filepath",
                 label="🎙️ Record or Upload Audio",
             )
-            transcribed_output        = gr.Textbox(label="📝 Transcribed Text", show_copy_button=True)
-            speech_translation_output = gr.Textbox(label="✨ Translation",      show_copy_button=True)
+            transcribed_output        = gr.Textbox(label="📝 Transcribed Text")
+            speech_translation_output = gr.Textbox(label="✨ Translation")
 
             speech_translate_btn = gr.Button("🚀 Transcribe & Translate", variant="primary", size="lg")
             speech_translate_btn.click(
@@ -152,7 +152,7 @@ with gr.Blocks(
                 placeholder="Enter sentences (one per line):\n\nSentence 1\nSentence 2\nSentence 3",
                 label="📝 Input Sentences",
             )
-            batch_output = gr.Textbox(lines=10, label="✨ Batch Translations", show_copy_button=True)
+            batch_output = gr.Textbox(lines=10, label="✨ Batch Translations")
 
             batch_btn = gr.Button("🚀 Translate Batch", variant="primary", size="lg")
             batch_btn.click(
@@ -191,7 +191,7 @@ with gr.Blocks(
                 lines=5, placeholder="Enter model-generated translation...",
                 label="🤖 Model Translation",
             )
-            bleu_output     = gr.Textbox(lines=15, label="📊 BLEU Score Report")
+            bleu_output = gr.Textbox(lines=15, label="📊 BLEU Score Report")
 
             bleu_btn = gr.Button("📊 Calculate BLEU", variant="primary", size="lg")
             bleu_btn.click(
