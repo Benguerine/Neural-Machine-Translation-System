@@ -47,7 +47,7 @@ def translate_text(
         with torch.no_grad():
             generated_tokens = model.generate(
                 **inputs,
-                forced_bos_token_id=tokenizer.lang_code_to_id[tgt_code],
+                forced_bos_token_id=tokenizer.convert_tokens_to_ids(tgt_code),
                 max_length=max_length,
                 num_beams=num_beams,
                 no_repeat_ngram_size=NO_REPEAT_NGRAM,
@@ -94,7 +94,7 @@ def batch_translate(
         with torch.no_grad():
             generated_tokens = model.generate(
                 **inputs,
-                forced_bos_token_id=tokenizer.lang_code_to_id[tgt_code],
+                forced_bos_token_id=tokenizer.convert_tokens_to_ids(tgt_code),
                 max_length=MAX_LENGTH,
                 num_beams=NUM_BEAMS,
                 no_repeat_ngram_size=NO_REPEAT_NGRAM,

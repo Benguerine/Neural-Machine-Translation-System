@@ -26,12 +26,8 @@ def _make_mock_get_model(decoded: str = "Mocked translation"):
     # batch_decode returns the decoded string(s)
     mock_tokenizer.batch_decode.return_value = [decoded]
 
-    # lang_code_to_id must be a real dict for the subscript lookup
-    mock_tokenizer.lang_code_to_id = {
-        "eng_Latn": 256047,
-        "fra_Latn": 256057,
-        "arb_Arab": 256007,
-    }
+    
+    
 
     return MagicMock(return_value=(mock_model, mock_tokenizer))
 
