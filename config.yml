@@ -7,7 +7,7 @@ inference:
   max_length: 512
   num_beams: 5
   no_repeat_ngram_size: 3
-  temperture: 0.9
+  temperature: 0.9
 
 messages:
   loading: "Loading model and tokenizer..."
