@@ -11,12 +11,8 @@ Server settings are read from environment variables (SERVER_HOST, SERVER_PORT)
 so the app can be configured without touching this file.
 """
 
-# Targeted warning suppression
-import warnings
-warnings.filterwarnings("ignore", category=FutureWarning, module="transformers")
-warnings.filterwarnings("ignore", category=UserWarning, module="torch")
-
 import os
+import warnings
 
 import gradio as gr
 
@@ -24,6 +20,10 @@ from src.ai_translator.languages import SUPPORTED_LANGUAGES
 from src.ai_translator.translate import translate_text, batch_translate
 from src.ai_translator.speech import speech_to_text
 from src.ai_translator.evaluate import calculate_bleu
+
+# Targeted warning suppression (never suppress everything globally)
+warnings.filterwarnings("ignore", category=FutureWarning, module="transformers")
+warnings.filterwarnings("ignore", category=UserWarning, module="torch")
 
 # Constants
 MAX_CHARS = 2_000          # hard cap on input length to protect the model
@@ -66,7 +66,7 @@ def gradio_batch_translate(texts: str, src_lang: str, tgt_lang: str) -> str:
     if not texts or not texts.strip():
         return "⚠️ Please enter at least one sentence."
 
-    lines = [l for l in texts.splitlines() if l.strip()]
+    lines = [line for line in texts.splitlines() if line.strip()]
     if len(lines) > MAX_BATCH_LINES:
         return (
             f"⚠️ Too many lines ({len(lines)}). "
