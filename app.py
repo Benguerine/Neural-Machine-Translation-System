@@ -1,48 +1,94 @@
 """
-Neural Machine Translation — AI Translator
-Gradio app entry point.
+app.py — Gradio entry point for the Neural Machine Translation System.
+
+Launches a multi-tab web UI that exposes:
+  - Single text translation
+  - Speech-to-text + translation
+  - Batch translation
+  - BLEU score evaluation
+
+Server settings are read from environment variables (SERVER_HOST, SERVER_PORT)
+so the app can be configured without touching this file.
 """
 
+# Targeted warning suppression
 import warnings
+warnings.filterwarnings("ignore", category=FutureWarning, module="transformers")
+warnings.filterwarnings("ignore", category=UserWarning, module="torch")
+
+import os
 
 import gradio as gr
 
 from src.ai_translator.languages import SUPPORTED_LANGUAGES
 from src.ai_translator.translate import translate_text, batch_translate
-from src.ai_translator.speech    import speech_to_text
-from src.ai_translator.evaluate  import calculate_bleu
+from src.ai_translator.speech import speech_to_text
+from src.ai_translator.evaluate import calculate_bleu
 
-warnings.filterwarnings("ignore")
+# Constants
+MAX_CHARS = 2_000          # hard cap on input length to protect the model
+MAX_BATCH_LINES = 50       # max sentences in batch mode
 
 
 # Gradio wrapper functions
 
 def gradio_translate(text: str, src_lang: str, tgt_lang: str) -> str:
-    """Wrapper for single translation."""
-    return translate_text(text, src_lang, tgt_lang)
+    """Validate input then call translate_text; return a user-friendly error on failure."""
+    if not text or not text.strip():
+        return "⚠️ Please enter some text to translate."
+    if len(text) > MAX_CHARS:
+        return f"⚠️ Input too long ({len(text):,} chars). Please keep it under {MAX_CHARS:,} characters."
+    try:
+        return translate_text(text, src_lang, tgt_lang)
+    except Exception as exc:
+        return f"❌ Translation failed: {exc}"
 
 
 def gradio_speech_translate(audio, src_lang: str, tgt_lang: str):
-    """Wrapper for speech-to-text + translation."""
+    """Transcribe audio then translate; returns (transcription, translation)."""
     if audio is None:
         return "⚠️ No audio provided", ""
+
     transcribed = speech_to_text(audio, src_lang)
     if transcribed.startswith(("❌", "⚠️")):
         return transcribed, ""
-    return transcribed, translate_text(transcribed, src_lang, tgt_lang)
+
+    try:
+        translation = translate_text(transcribed, src_lang, tgt_lang)
+    except Exception as exc:
+        return transcribed, f"❌ Translation failed: {exc}"
+
+    return transcribed, translation
 
 
 def gradio_batch_translate(texts: str, src_lang: str, tgt_lang: str) -> str:
-    """Wrapper for batch translation."""
-    return batch_translate(texts, src_lang, tgt_lang)
+    """Validate batch input then translate; enforces line-count limit."""
+    if not texts or not texts.strip():
+        return "⚠️ Please enter at least one sentence."
+
+    lines = [l for l in texts.splitlines() if l.strip()]
+    if len(lines) > MAX_BATCH_LINES:
+        return (
+            f"⚠️ Too many lines ({len(lines)}). "
+            f"Please submit at most {MAX_BATCH_LINES} sentences at a time."
+        )
+    try:
+        return batch_translate(texts, src_lang, tgt_lang)
+    except Exception as exc:
+        return f"❌ Batch translation failed: {exc}"
 
 
 def gradio_bleu(reference: str, hypothesis: str) -> str:
-    """Wrapper for BLEU evaluation."""
-    if not reference or not hypothesis:
-        return "Please provide both reference and hypothesis translations."
-    _, report = calculate_bleu(reference, hypothesis)
-    return report
+    """Calculate BLEU score with basic validation."""
+    if not reference or not reference.strip():
+        return "⚠️ Please provide a reference translation."
+    if not hypothesis or not hypothesis.strip():
+        return "⚠️ Please provide a hypothesis translation."
+    try:
+        _, report = calculate_bleu(reference, hypothesis)
+        return report
+    except Exception as exc:
+        return f"❌ BLEU calculation failed: {exc}"
 
 
 # Gradio UI
@@ -51,15 +97,15 @@ with gr.Blocks(
     title="🌍 Neural Machine Translation",
     theme=gr.themes.Soft(),
     css="""
-    .gradio-container { max-width: 1200px !important; }
-    .tab-nav button   { font-size: 16px !important; font-weight: 600 !important; }
+        .gradio-container { max-width: 1200px !important; }
+        .tab-nav button { font-size: 16px !important; font-weight: 600 !important; }
     """,
 ) as demo:
 
     gr.Markdown(
         """
         # 🌍 Neural Machine Translation System
-        ### Powered by Facebook NLLB-200 | 200+ Languages | PyTorch 2.10
+        ### Powered by Facebook NLLB-200 | 200+ Languages | PyTorch 2.x
         """
     )
 
@@ -74,8 +120,10 @@ with gr.Blocks(
                         label="🌐 Source Language", interactive=True,
                     )
                     input_text = gr.Textbox(
-                        lines=10, placeholder="Enter text to translate...",
+                        lines=10,
+                        placeholder=f"Enter text to translate… (max {MAX_CHARS:,} characters)",
                         label="📝 Input Text",
+                        show_copy_button=True,
                     )
                 with gr.Column(scale=1):
                     tgt_lang_text = gr.Dropdown(
@@ -83,7 +131,7 @@ with gr.Blocks(
                         label="🌐 Target Language", interactive=True,
                     )
                     output_text = gr.Textbox(
-                        lines=10, label="✨ Translation",
+                        lines=10, label="✨ Translation", show_copy_button=True,
                     )
 
             translate_btn = gr.Button("🚀 Translate", variant="primary", size="lg")
@@ -95,10 +143,10 @@ with gr.Blocks(
 
             gr.Examples(
                 examples=[
-                    ["Hello, how are you today?",           "English", "French"],
-                    ["Machine learning is fascinating.",    "English", "Spanish"],
-                    ["I love traveling around the world.",  "English", "Arabic"],
-                    ["The weather is beautiful.",           "English", "German"],
+                    ["Hello, how are you today?", "English", "French"],
+                    ["Machine learning is fascinating.", "English", "Spanish"],
+                    ["I love traveling around the world.", "English", "Arabic"],
+                    ["The weather is beautiful.", "English", "German"],
                 ],
                 inputs=[input_text, src_lang_text, tgt_lang_text],
             )
@@ -115,16 +163,18 @@ with gr.Blocks(
                         choices=SUPPORTED_LANGUAGES, value="French",
                         label="🌐 Target Language",
                     )
+                    audio_input = gr.Audio(
+                        sources=["microphone", "upload"],
+                        type="filepath",
+                        label="🎙️ Record or Upload Audio",
+                    )
 
-            audio_input = gr.Audio(
-                sources=["microphone", "upload"],
-                type="filepath",
-                label="🎙️ Record or Upload Audio",
+            transcribed_output = gr.Textbox(label="📝 Transcribed Text", show_copy_button=True)
+            speech_translation_output = gr.Textbox(label="✨ Translation", show_copy_button=True)
+
+            speech_translate_btn = gr.Button(
+                "🚀 Transcribe & Translate", variant="primary", size="lg"
             )
-            transcribed_output        = gr.Textbox(label="📝 Transcribed Text")
-            speech_translation_output = gr.Textbox(label="✨ Translation")
-
-            speech_translate_btn = gr.Button("🚀 Transcribe & Translate", variant="primary", size="lg")
             speech_translate_btn.click(
                 fn=gradio_speech_translate,
                 inputs=[audio_input, src_lang_speech, tgt_lang_speech],
@@ -134,9 +184,9 @@ with gr.Blocks(
         # Batch Translation
         with gr.Tab("📦 Batch Translation"):
             gr.Markdown(
-                """
+                f"""
                 ### Translate multiple sentences at once
-                Enter one sentence per line for faster processing.
+                Enter one sentence per line (max **{MAX_BATCH_LINES} lines**).
                 """
             )
             with gr.Row():
@@ -147,12 +197,14 @@ with gr.Blocks(
                     choices=SUPPORTED_LANGUAGES, value="Spanish", label="🌐 Target Language",
                 )
 
-            batch_input  = gr.Textbox(
+            batch_input = gr.Textbox(
                 lines=10,
                 placeholder="Enter sentences (one per line):\n\nSentence 1\nSentence 2\nSentence 3",
                 label="📝 Input Sentences",
             )
-            batch_output = gr.Textbox(lines=10, label="✨ Batch Translations")
+            batch_output = gr.Textbox(
+                lines=10, label="✨ Batch Translations", show_copy_button=True,
+            )
 
             batch_btn = gr.Button("🚀 Translate Batch", variant="primary", size="lg")
             batch_btn.click(
@@ -173,22 +225,24 @@ with gr.Blocks(
             gr.Markdown(
                 """
                 ### Evaluate Translation Quality
-                Compare reference translation with model output using BLEU score.
+                Compare a reference translation with model output using the BLEU score.
 
                 **BLEU Score Guide:**
-                - 60-100: Excellent ✅
-                - 40-60:  Good 👍
-                - 20-40:  Fair ⚠️
-                - 0-20:   Poor ❌
+                - 60–100: Excellent ✅
+                - 40–60:  Good 👍
+                - 20–40:  Fair ⚠️
+                - 0–20:   Poor ❌
                 """
             )
 
-            reference_text  = gr.Textbox(
-                lines=5, placeholder="Enter reference (ground truth) translation...",
+            reference_text = gr.Textbox(
+                lines=5,
+                placeholder="Enter reference (ground truth) translation…",
                 label="📚 Reference Translation",
             )
             hypothesis_text = gr.Textbox(
-                lines=5, placeholder="Enter model-generated translation...",
+                lines=5,
+                placeholder="Enter model-generated translation…",
                 label="🤖 Model Translation",
             )
             bleu_output = gr.Textbox(lines=15, label="📊 BLEU Score Report")
@@ -202,7 +256,7 @@ with gr.Blocks(
 
             gr.Examples(
                 examples=[
-                    ["Le chat est sur le tapis",     "Le chat est sur le tapis"],
+                    ["Le chat est sur le tapis", "Le chat est sur le tapis"],
                     ["Bonjour, comment allez-vous?", "Bonjour, comment vas-tu?"],
                 ],
                 inputs=[reference_text, hypothesis_text],
@@ -211,14 +265,14 @@ with gr.Blocks(
     gr.Markdown(
         """
         ---
-        **Model:** Facebook NLLB-200-distilled-600M | **Framework:** PyTorch 2.10 + Transformers
-
+        **Model:** Facebook NLLB-200-distilled-600M | **Framework:** PyTorch 2.x + Transformers  
         Built with ❤️ using Gradio
         """
     )
 
 
-# Launch the app
-
+# Launch
 if __name__ == "__main__":
-    demo.launch(server_name="0.0.0.0", server_port=7860, share=False, show_api=False)
+    host = os.environ.get("SERVER_HOST", "0.0.0.0")
+    port = int(os.environ.get("SERVER_PORT", "7860"))
+    demo.launch(server_name=host, server_port=port, share=False)
