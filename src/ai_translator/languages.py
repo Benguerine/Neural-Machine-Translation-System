@@ -175,7 +175,8 @@ SPEECH_LANG_CODES: dict[str, str] = {
     "Khmer":                 "km-KH",
     "Burmese":               "my-MM",
     "Mongolian":             "mn-MN",
-    "Swahili":               "sw-KE",
+    # Swahili removed: Google SR does not support sw-KE reliably;
+    # get_speech_code("Swahili") will return the fallback (en-US by default).
     "Amharic":               "am-ET",
     "Zulu":                  "zu-ZA",
     "Afrikaans":             "af-ZA",
