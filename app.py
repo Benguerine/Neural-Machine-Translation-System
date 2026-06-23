@@ -17,10 +17,9 @@ import warnings
 import gradio as gr
 
 from src.ai_translator.languages import SUPPORTED_LANGUAGES
-from src.ai_translator.translate import translate_text_timed, batch_translate
+from src.ai_translator.translate import translate_text, batch_translate
 from src.ai_translator.speech import speech_to_text
 from src.ai_translator.evaluate import calculate_bleu
-from src.ai_translator.model import device, is_model_loaded
 
 # Targeted warning suppression (never suppress everything globally)
 warnings.filterwarnings("ignore", category=FutureWarning, module="transformers")
@@ -32,58 +31,37 @@ MAX_BATCH_LINES = 50       # max sentences in batch mode
 
 
 # Gradio wrapper functions
-#
-# Each handler below takes a `progress` argument (Gradio injects a
-# gr.Progress() instance automatically when a function signature asks for
-# one). This replaces Gradio's default, stage-less "processing | X/Xs"
-# timer with a label that actually tells the user what's happening —
-# loading the model on the very first call is a one-time, much longer
-# wait than a normal translation, and the two should not look identical.
 
-def gradio_translate(
-    text: str, src_lang: str, tgt_lang: str, progress=gr.Progress()
-) -> str:
+def gradio_translate(text: str, src_lang: str, tgt_lang: str) -> str:
     """Validate input then call translate_text; return a user-friendly error on failure."""
     if not text or not text.strip():
         return "Enter text to translate."
     if len(text) > MAX_CHARS:
         return f"Input too long ({len(text):,} characters). Keep it under {MAX_CHARS:,} characters."
-
-    if not is_model_loaded():
-        progress(0, desc="Loading model (first run only, ~30-60s)…")
-    else:
-        progress(0, desc=f"Translating on {device.upper()}…")
-
     try:
-        result, elapsed = translate_text_timed(text, src_lang, tgt_lang)
-        progress(1, desc="Done")
-        return f"{result}\n\n— translated in {elapsed:.1f}s ({device.upper()})"
+        return translate_text(text, src_lang, tgt_lang)
     except Exception as exc:
         return f"Translation failed: {exc}"
 
 
-def gradio_speech_translate(audio, src_lang: str, tgt_lang: str, progress=gr.Progress()):
+def gradio_speech_translate(audio, src_lang: str, tgt_lang: str):
     """Transcribe audio then translate; returns (transcription, translation)."""
     if audio is None:
         return "No audio provided.", ""
 
-    progress(0, desc="Transcribing audio…")
     transcribed = speech_to_text(audio, src_lang)
     if transcribed.startswith(("Transcription failed", "No audio", "❌", "⚠️")):
         return transcribed, ""
 
-    progress(0.5, desc="Loading model (first run only)…" if not is_model_loaded() else "Translating…")
     try:
-        translation, elapsed = translate_text_timed(transcribed, src_lang, tgt_lang)
-        progress(1, desc="Done")
-        return transcribed, f"{translation}\n\n— translated in {elapsed:.1f}s ({device.upper()})"
+        translation = translate_text(transcribed, src_lang, tgt_lang)
     except Exception as exc:
         return transcribed, f"Translation failed: {exc}"
 
+    return transcribed, translation
 
-def gradio_batch_translate(
-    texts: str, src_lang: str, tgt_lang: str, progress=gr.Progress()
-) -> str:
+
+def gradio_batch_translate(texts: str, src_lang: str, tgt_lang: str) -> str:
     """Validate batch input then translate; enforces line-count limit."""
     if not texts or not texts.strip():
         return "Enter at least one sentence."
@@ -94,16 +72,8 @@ def gradio_batch_translate(
             f"Too many lines ({len(lines)}). "
             f"Submit at most {MAX_BATCH_LINES} sentences at a time."
         )
-
-    if not is_model_loaded():
-        progress(0, desc="Loading model (first run only, ~30-60s)…")
-    else:
-        progress(0, desc=f"Translating {len(lines)} line(s) on {device.upper()}…")
-
     try:
-        result = batch_translate(texts, src_lang, tgt_lang)
-        progress(1, desc="Done")
-        return result
+        return batch_translate(texts, src_lang, tgt_lang)
     except Exception as exc:
         return f"Batch translation failed: {exc}"
 
@@ -119,8 +89,6 @@ def gradio_bleu(reference: str, hypothesis: str) -> str:
         return report
     except Exception as exc:
         return f"BLEU calculation failed: {exc}"
-
-
 
 
 # Theme & styling
@@ -284,10 +252,10 @@ with gr.Blocks(
 ) as demo:
 
     gr.HTML(
-        f"""
+        """
         <div id="masthead">
             <h1>Neural Machine Translation</h1>
-            <p>NLLB-200 distilled-600M · 200+ languages · PyTorch 2.x · running on {device.upper()}</p>
+            <p>NLLB-200 distilled-600M · 200+ languages · PyTorch 2.x</p>
         </div>
         """
     )
@@ -319,15 +287,9 @@ with gr.Blocks(
 
             translate_btn = gr.Button("Translate", variant="primary", size="lg")
             translate_btn.click(
-                fn=lambda: gr.update(interactive=False, value="Translating…"),
-                outputs=translate_btn,
-            ).then(
                 fn=gradio_translate,
                 inputs=[input_text, src_lang_text, tgt_lang_text],
                 outputs=output_text,
-            ).then(
-                fn=lambda: gr.update(interactive=True, value="Translate"),
-                outputs=translate_btn,
             )
 
             gr.Examples(
@@ -371,15 +333,9 @@ with gr.Blocks(
                 "Transcribe & translate", variant="primary", size="lg"
             )
             speech_translate_btn.click(
-                fn=lambda: gr.update(interactive=False, value="Transcribing & translating…"),
-                outputs=speech_translate_btn,
-            ).then(
                 fn=gradio_speech_translate,
                 inputs=[audio_input, src_lang_speech, tgt_lang_speech],
                 outputs=[transcribed_output, speech_translation_output],
-            ).then(
-                fn=lambda: gr.update(interactive=True, value="Transcribe & translate"),
-                outputs=speech_translate_btn,
             )
 
         # Batch Translation
@@ -407,15 +363,9 @@ with gr.Blocks(
 
             batch_btn = gr.Button("Translate batch", variant="primary", size="lg")
             batch_btn.click(
-                fn=lambda: gr.update(interactive=False, value="Translating batch…"),
-                outputs=batch_btn,
-            ).then(
                 fn=gradio_batch_translate,
                 inputs=[batch_input, src_lang_batch, tgt_lang_batch],
                 outputs=batch_output,
-            ).then(
-                fn=lambda: gr.update(interactive=True, value="Translate batch"),
-                outputs=batch_btn,
             )
 
             gr.Examples(
@@ -483,16 +433,4 @@ with gr.Blocks(
 if __name__ == "__main__":
     host = os.environ.get("SERVER_HOST", "0.0.0.0")
     port = int(os.environ.get("SERVER_PORT", "7860"))
-
-    # Load the model once at startup instead of on the first user click.
-    # Without this, whoever clicks "Translate" first pays the full
-    # download/load cost (often 10-60s+) on top of actual translation
-    # time, with no indication of why it's so much slower than later
-    # clicks. Paying that cost here means every user-facing translation
-    # is consistently fast.
-    print("Warming up model before accepting requests…")
-    from src.ai_translator.model import get_model
-    get_model()
-    print("Model warm-up complete — server is ready.")
-
     demo.launch(server_name=host, server_port=port, share=False)
