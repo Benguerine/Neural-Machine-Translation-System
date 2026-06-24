@@ -25,6 +25,18 @@ _tokenizer = None
 _model     = None
 
 
+def is_model_loaded() -> bool:
+    """
+    Cheap, side-effect-free check of whether the model is already in memory.
+
+    The UI layer uses this to decide whether to show a "loading the model,
+    first run only" message versus a regular "translating" message —
+    those are very different wait times and the user should know which
+    one they're in.
+    """
+    return _model is not None
+
+
 def get_model():
     """
     Return (model, tokenizer), downloading and loading on the first call only.
