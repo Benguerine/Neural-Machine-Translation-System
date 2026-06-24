@@ -1,3 +1,4 @@
+import time
 import torch
 import yaml
 from pathlib import Path
@@ -13,7 +14,11 @@ with open(_config_path) as _f:
 MAX_LENGTH:     int = _cfg["max_length"]
 NUM_BEAMS:      int = _cfg["num_beams"]
 NO_REPEAT_NGRAM: int = _cfg["no_repeat_ngram_size"]
-TEMPERATURE:   float = _cfg["temperature"]
+# NOTE: temperature is intentionally unused now. It only has an effect when
+# do_sample=True, and we generate with beam search (do_sample=False) below —
+# deterministic, faster, and generally better BLEU for NMT than sampling.
+# Kept in config.yml for anyone who wants to experiment with sampling-based
+# generation, but it is not applied by default.
 
 
 def translate_text(
@@ -51,14 +56,32 @@ def translate_text(
                 max_length=max_length,
                 num_beams=num_beams,
                 no_repeat_ngram_size=NO_REPEAT_NGRAM,
-                temperature=TEMPERATURE,
-                do_sample=True,
+                do_sample=False,
             )
 
         return tokenizer.batch_decode(generated_tokens, skip_special_tokens=True)[0]
 
     except Exception as exc:
         return f"Translation error: {str(exc)}"
+
+
+def translate_text_timed(
+        text: str,
+        source_lang: str,
+        target_lang: str,
+        max_length: int = MAX_LENGTH,
+        num_beams: int  = NUM_BEAMS,
+) -> tuple[str, float]:
+    """
+    Same as translate_text, but also returns wall-clock seconds spent.
+
+    Used by the UI layer to show a meaningful "translated in N.Ns" instead
+    of relying on Gradio's generic, stage-less progress timer.
+    """
+    start = time.perf_counter()
+    result = translate_text(text, source_lang, target_lang, max_length, num_beams)
+    elapsed = time.perf_counter() - start
+    return result, elapsed
 
 
 def batch_translate(
@@ -98,8 +121,7 @@ def batch_translate(
                 max_length=MAX_LENGTH,
                 num_beams=NUM_BEAMS,
                 no_repeat_ngram_size=NO_REPEAT_NGRAM,
-                temperature=TEMPERATURE,
-                do_sample=True,
+                do_sample=False,
                 early_stopping=True,
             )
 
