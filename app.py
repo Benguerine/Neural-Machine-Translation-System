@@ -73,7 +73,7 @@ def gradio_batch_translate(texts: str, src_lang: str, tgt_lang: str) -> str:
             f"Submit at most {MAX_BATCH_LINES} sentences at a time."
         )
     try:
-        return batch_translate(texts, src_lang, tgt_lang)
+        return batch_translate(lines, src_lang, tgt_lang)
     except Exception as exc:
         return f"Batch translation failed: {exc}"
 
