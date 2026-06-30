@@ -273,16 +273,16 @@ Unit tests mock `get_model()` so language mapping and translation logic can be v
 ## Screenshots
 
 **Text translation tab** — input and output panels side by side with language selectors.
-![Text translation tab](docs\images\text-translation.png)
+![Text translation tab](docs/images/text-translation.png)
 
 **Speech translation tab** — audio recorder/upload control with transcription and translation outputs.
-![Speech translation tab](docs\images\speech-translation.png)
+![Speech translation tab](docs/images/speech-translation.png)
 
 **Batch translation tab** — multi-line input translated into numbered output lines.
-![Batch translation tab](docs\images\batch-translation.png)
+![Batch translation tab](docs/images/batch-translation.png)
 
 **BLEU evaluation tab** — reference vs. hypothesis comparison with a quality legend and score report.
-![BLEU evaluation tab](docs\images\bleu-evaluation.png)
+![BLEU evaluation tab](docs/images/bleu-evaluation.png)
 
 ---
 
