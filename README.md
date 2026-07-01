@@ -1,3 +1,15 @@
+---
+title: Neural Machine Translation AI Translator
+emoji: 🌍
+colorFrom: blue
+colorTo: green
+sdk: gradio
+sdk_version: 5.29.0
+app_file: app.py
+python_version: "3.12"
+pinned: false
+---
+
 # Neural Machine Translation — AI Translator
 
 A production-style **Neural Machine Translation (NMT)** application built on top of Meta AI's **NLLB-200** (No Language Left Behind) model. The app exposes a clean, interactive web interface for translating text between 200+ languages, transcribing and translating speech, processing translations in bulk, and quantitatively evaluating translation quality with the BLEU metric.
